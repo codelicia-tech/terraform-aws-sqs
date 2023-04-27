@@ -4,6 +4,11 @@ resource "aws_sqs_queue" "my_queue" {
   max_message_size          = 2048
   message_retention_seconds = 86400
   receive_wait_time_seconds = 10
+  
+  redrive_policy = jsonencode({
+    deadLetterTargetArn = aws_sqs_queue.my_queue_dlq.arn
+    maxReceiveCount     = 3
+  })
 }
 
 resource "aws_sqs_queue" "my_queue_dlq" {
@@ -50,10 +55,4 @@ resource "aws_sqs_queue_policy" "my_queue_policy" {
   ]
 }
 EOF
-}
-
-resource "aws_sqs_queue_dead_letter_source" "my_queue_dlq_source" {
-  queue_url = aws_sqs_queue.my_queue_dlq.url
-  arn       = aws_sqs_queue.my_queue.arn
-  max_receive_count = 5
 }
